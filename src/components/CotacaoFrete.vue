@@ -1,5 +1,6 @@
 <script setup>
-    import InformationIcon from './icons/IconInformation.vue'
+    import InformationIcon from './icons/IconInformation.vue';
+    import FreightResults from './FreightResults.vue'
 </script>
 
 <template>
@@ -68,6 +69,7 @@
             </div>
         </form>
     </div>
+    <FreightResults />
 </template>
 
 <style scoped>
@@ -177,6 +179,10 @@
     }
 
     @media (max-width: 1024px) {
+        .form-container {
+            padding: 0.75rem;
+        }
+
         .top {
             grid-template-columns: 1fr;
         }
@@ -186,8 +192,13 @@
         }
 
         .footer-form {
-            align-items: flex-start;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .footer-form button {
+            width: 100%;
         }
     }
 </style>
