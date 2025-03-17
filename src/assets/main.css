@@ -16,10 +16,13 @@
   --white: #fff;
   --black: #212121;
 
+  --blue-200: #02aeef;
   --background-body: #F8F9FA;
   --blue-500: #0376D4;
   --border-color: #F8F9FA;
+  --border-input: #ccc;
 
+  --preto-60: #666666;
   --text-primary: #101828;
 }
 
