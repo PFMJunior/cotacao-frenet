@@ -9,21 +9,15 @@
             Calculadora de fretes
             <InformationIcon />
         </h2>
-        <form>
+        <form @submit.prevent="calcularFrete">
             <div class="top">
                 <div class="form-group">
                     <label for="cep_origin">CEP de Origem</label>
-                    <input
-                        type="text"
-                        id="cep_origin"
-                    >
+                    <input type="text" v-model="cep_origin" v-mask="'#####-###'" placeholder="Digite o CEP" />
                 </div>
                 <div class="form-group">
                     <label for="cep_destination">CEP de Destino</label>
-                    <input
-                        type="text"
-                        id="cep_destination"
-                    >
+                    <input type="text" v-model="cep_destination" v-mask="'#####-###'" placeholder="Digite o CEP" />
                 </div>
             </div>
             <div class="bottom">
@@ -33,6 +27,8 @@
                         <input
                             type="number"
                             id="weight"
+                            v-model="weight"
+                            v-mask="'###.## kg'"
                         >
                         <span>kg</span>
                     </div>
@@ -41,8 +37,9 @@
                     <label for="width">Largura</label>
                     <div class="input-form">
                         <input
-                            type="number"
+                            type="tel"
                             id="width"
+                            maxlength="3"
                         >
                         <span>cm</span>
                     </div>
@@ -51,8 +48,9 @@
                     <label for="height">Altura</label>
                     <div class="input-form">
                         <input
-                            type="number"
+                            type="tel"
                             id="height"
+                            maxlength="3"
                         >
                         <span>cm</span>
                     </div>
@@ -61,18 +59,22 @@
                     <label for="length">Comprimento</label>
                     <div class="input-form">
                         <input
-                            type="number"
+                            type="tel"
                             id="length"
+                            maxlength="3"
                         >
                         <span>cm</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="declared_value">Valor Declarado</label>
-                    <input
+                    <!-- <input
                         type="number"
                         id="declared_value"
-                    >
+                        v-model="declared_value"
+                        v-mask="'R$ #.##0,00'"
+                    > -->
+                    <input type="text" id="preco" v-model="preco" v-money="money" />
                 </div>
             </div>
             <div class="footer-form">
@@ -83,6 +85,45 @@
     </div>
     <FreightResults />
 </template>
+
+<script>
+    import { ref } from 'vue';
+    import { VueMaskDirective } from 'vue-the-mask';
+
+    export default {
+        directives: { mask: VueMaskDirective, },
+        setup() {
+            const cep_origin = ref('');
+            const cep_destination = ref('');
+
+            return {
+                cep_origin,
+                cep_destination
+            };
+        },
+
+        data() {
+            return {
+                form: {
+                    declared_value: null,
+                },
+                money: {
+                    decimal: ',',
+                    thousands: '.',
+                    prefix: 'R$ ',
+                    precision: 2,
+                    masked: true
+                }
+            };
+        },
+        methods: {
+            calcularFrete() {
+            // Aqui você pode adicionar a lógica para calcular o frete
+            console.log('Formulário enviado:', this.form);
+            },
+        },
+    };
+</script>
 
 <style scoped>
     .form-container {
@@ -147,7 +188,8 @@
     }
 
     input[type="text"],
-    input[type="number"] {
+    input[type="number"],
+    input[type="tel"] {
         width: 100%;
         padding: 8px;
         border: 1px solid var(--border-input);
