@@ -12,14 +12,14 @@
         <form>
             <div class="top">
                 <div class="form-group">
-                    <label for="cep_origin">CEP de Origem:</label>
+                    <label for="cep_origin">CEP de Origem</label>
                     <input
                         type="text"
                         id="cep_origin"
                     >
                 </div>
                 <div class="form-group">
-                    <label for="cep_destination">CEP de Destino:</label>
+                    <label for="cep_destination">CEP de Destino</label>
                     <input
                         type="text"
                         id="cep_destination"
@@ -28,35 +28,47 @@
             </div>
             <div class="bottom">
                 <div class="form-group">
-                    <label for="weight">Peso do Produto (kg):</label>
-                    <input
-                        type="number"
-                        id="weight"
-                    >
+                    <label for="weight">Peso do Produto</label>
+                    <div class="input-form">
+                        <input
+                            type="number"
+                            id="weight"
+                        >
+                        <span>kg</span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="width">Largura (cm):</label>
-                    <input
-                        type="number"
-                        id="width"
-                    >
+                    <label for="width">Largura</label>
+                    <div class="input-form">
+                        <input
+                            type="number"
+                            id="width"
+                        >
+                        <span>cm</span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="height">Altura (cm):</label>
-                    <input
-                        type="number"
-                        id="height"
-                    >
+                    <label for="height">Altura</label>
+                    <div class="input-form">
+                        <input
+                            type="number"
+                            id="height"
+                        >
+                        <span>cm</span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="length">Comprimento (cm):</label>
-                    <input
-                        type="number"
-                        id="length"
-                    >
+                    <label for="length">Comprimento</label>
+                    <div class="input-form">
+                        <input
+                            type="number"
+                            id="length"
+                        >
+                        <span>cm</span>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label for="declared_value">Valor Declarado:</label>
+                    <label for="declared_value">Valor Declarado</label>
                     <input
                         type="number"
                         id="declared_value"
@@ -138,8 +150,32 @@
     input[type="number"] {
         width: 100%;
         padding: 8px;
-        border: 1px solid #ccc;
+        border: 1px solid var(--border-input);
         border-radius: 4px;
+    }
+
+    input:focus {
+        outline: transparent;
+        border: 1px solid transparent;
+        box-shadow: 0 0 0 1px var(--blue-200);
+    }
+
+    .input-form {
+        position: relative;
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .input-form span {
+        position: absolute;
+        top: 50%;
+        transform: translatey(-50%);
+        right: 1.5rem;
+
+        color: var(--preto-60);
+        font-size: 0.875rem;
     }
 
     .footer-form {
