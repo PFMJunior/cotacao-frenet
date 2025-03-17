@@ -85,7 +85,7 @@
     }
 
     .image .postagem {
-        color: #666666;
+        color: var(--preto-60);
         font-size: 0.625rem;
         font-weight: 400;
         margin-top: .3rem;
