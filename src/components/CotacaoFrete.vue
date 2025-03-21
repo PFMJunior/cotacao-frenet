@@ -1,6 +1,7 @@
 <script setup>
     import InformationIcon from './icons/IconInformation.vue';
-    import FreightResults from './FreightResults.vue'
+    import FreightResults from './FreightResults.vue';
+    import PrecoInput from './PrecoInput.vue';
 </script>
 
 <template>
@@ -9,15 +10,27 @@
             Calculadora de fretes
             <InformationIcon />
         </h2>
-        <form @submit.prevent="calcularFrete">
+        <form @submit.prevent="cotarFrete">
             <div class="top">
                 <div class="form-group">
                     <label for="cep_origin">CEP de Origem</label>
-                    <input type="text" v-model="cep_origin" v-mask="'#####-###'" placeholder="Digite o CEP" />
+                    <input
+                        type="tel"
+                        id="cep_origin"
+                        v-mask="'#####-###'"
+                        v-model="dados.cep_origin"
+                        placeholder="Digite o CEP"
+                    />
                 </div>
                 <div class="form-group">
                     <label for="cep_destination">CEP de Destino</label>
-                    <input type="text" v-model="cep_destination" v-mask="'#####-###'" placeholder="Digite o CEP" />
+                    <input
+                        type="tel"
+                        id="cep_destination"
+                        v-mask="'#####-###'"
+                        placeholder="Digite o CEP"
+                        v-model="dados.cep_destination"
+                    />
                 </div>
             </div>
             <div class="bottom">
@@ -25,10 +38,10 @@
                     <label for="weight">Peso do Produto</label>
                     <div class="input-form">
                         <input
-                            type="number"
+                            type="tel"
                             id="weight"
-                            v-model="weight"
-                            v-mask="'###.## kg'"
+                            v-mask="'#.###.###'"
+                            v-model.number="dados.weight"
                         >
                         <span>kg</span>
                     </div>
@@ -40,6 +53,7 @@
                             type="tel"
                             id="width"
                             maxlength="3"
+                            v-model.number="dados.width"
                         >
                         <span>cm</span>
                     </div>
@@ -51,6 +65,7 @@
                             type="tel"
                             id="height"
                             maxlength="3"
+                            v-model.number="dados.height"
                         >
                         <span>cm</span>
                     </div>
@@ -62,6 +77,7 @@
                             type="tel"
                             id="length"
                             maxlength="3"
+                            v-model.number="dados.length"
                         >
                         <span>cm</span>
                     </div>
@@ -69,12 +85,11 @@
                 <div class="form-group">
                     <label for="declared_value">Valor Declarado</label>
                     <!-- <input
-                        type="number"
+                        type="tel"
                         id="declared_value"
-                        v-model="declared_value"
-                        v-mask="'R$ #.##0,00'"
+                        v-model.number="dados.declared_value"
                     > -->
-                    <input type="text" id="preco" v-model="preco" v-money="money" />
+                    <PrecoInput v-model="dados.declared_value" />
                 </div>
             </div>
             <div class="footer-form">
@@ -83,11 +98,19 @@
             </div>
         </form>
     </div>
-    <FreightResults />
+    <div v-if="resultados.length > 0">
+        <FreightResults
+            :name="resultados[0].ServiceDescription"
+            :time="resultados[0].OriginalDeliveryTime"
+            :price="resultados[0].ShippingPrice"
+            :originalPrice="resultados[0].OriginalShippingPrice"
+        />
+    </div>
 </template>
 
 <script>
     import { ref } from 'vue';
+    import axios from 'axios';
     import { VueMaskDirective } from 'vue-the-mask';
 
     export default {
@@ -95,31 +118,85 @@
         setup() {
             const cep_origin = ref('');
             const cep_destination = ref('');
+            const weight = ref('');
 
             return {
                 cep_origin,
-                cep_destination
+                cep_destination,
+                weight
             };
         },
 
         data() {
             return {
-                form: {
-                    declared_value: null,
+                dados: {
+                    cep_origin: '',
+                    cep_destination: '',
+                    weight: 0,
+                    width: 0,
+                    height: 0,
+                    length: 0,
+                    declared_value: 0,
                 },
-                money: {
-                    decimal: ',',
-                    thousands: '.',
-                    prefix: 'R$ ',
-                    precision: 2,
-                    masked: true
-                }
+                resultados: [],
             };
         },
         methods: {
-            calcularFrete() {
-            // Aqui você pode adicionar a lógica para calcular o frete
-            console.log('Formulário enviado:', this.form);
+            async cotarFrete() {
+                console.log('Dados do formulário:', this.dados);
+
+                // Converter CEPs para números
+                const cep_origin = parseInt(this.dados.cep_origin.replace(/\D/g, ''), 10);
+                const cep_destination = parseInt(this.dados.cep_destination.replace(/\D/g, ''), 10);
+                // Verifique se todos os valores são números válidos
+                if (
+                    isNaN(cep_origin) ||
+                    isNaN(cep_destination) ||
+                    typeof this.dados.weight !== 'number' ||
+                    typeof this.dados.width !== 'number' ||
+                    typeof this.dados.height !== 'number' ||
+                    typeof this.dados.length !== 'number' ||
+                    typeof this.dados.declared_value !== 'number'
+                ) {
+                    console.error('Erro: Todos os campos devem ser números.');
+                    return;
+                }
+
+                try {
+                    const response = await axios.post(
+                        'http://localhost:3000/api/shipping/quote',
+                        {
+                            SellerCEP: this.dados.cep_origin,
+                            RecipientCEP: this.dados.cep_destination,
+                            ShipmentInvoiceValue: this.dados.declared_value,
+                            ShippingItemArray: [
+                                {
+                                    Weight: this.dados.weight,
+                                    Length: this.dados.length,
+                                    Height: this.dados.height,
+                                    Width: this.dados.width,
+                                },
+                            ],
+                        }
+                    );
+
+                    console.log('Resultados da cotação:', response.data);
+                    this.resultados = response.data.ShippingSevicesArray;
+                } catch (error) {
+                    if (error.response) {
+                        // A requisição foi feita, mas a API retornou um código de erro
+                        console.error('Erro na cotação:', error.response.data);
+                        console.error('Status:', error.response.status);
+                        console.error('Headers:', error.response.headers);
+                    } else if (error.request) {
+                        // A requisição foi feita, mas nenhuma resposta foi recebida
+                        console.error('Erro na cotação: Nenhuma resposta recebida');
+                        console.error(error.request);
+                    } else {
+                        // Algum outro erro aconteceu ao configurar a requisição
+                        console.error('Erro na cotação:', error.message);
+                    }
+                }
             },
         },
     };
