@@ -98,6 +98,11 @@
             </div>
         </form>
     </div>
+
+    <div v-if="carregando" class="loading">
+        <p>Carregando resultados...</p>
+    </div>
+
     <div v-if="resultados.length > 0">
         <FreightResults
             :name="resultados[0].ServiceDescription"
@@ -112,6 +117,8 @@
     import { ref } from 'vue';
     import axios from 'axios';
     import { VueMaskDirective } from 'vue-the-mask';
+    
+    const carregando = ref(false);
 
     export default {
         directives: { mask: VueMaskDirective, },
@@ -143,15 +150,16 @@
         },
         methods: {
             async cotarFrete() {
+                carregando.value = true;
                 console.log('Dados do formulário:', this.dados);
 
                 // Converter CEPs para números
-                const cep_origin = parseInt(this.dados.cep_origin.replace(/\D/g, ''), 10);
-                const cep_destination = parseInt(this.dados.cep_destination.replace(/\D/g, ''), 10);
+                // const cep_origin = parseInt(this.dados.cep_origin.replace(/\D/g, ''), 10);
+                // const cep_destination = parseInt(this.dados.cep_destination.replace(/\D/g, ''), 10);
                 // Verifique se todos os valores são números válidos
                 if (
-                    isNaN(cep_origin) ||
-                    isNaN(cep_destination) ||
+                    // isNaN(cep_origin) ||
+                    // isNaN(cep_destination) ||
                     typeof this.dados.weight !== 'number' ||
                     typeof this.dados.width !== 'number' ||
                     typeof this.dados.height !== 'number' ||
@@ -182,19 +190,23 @@
 
                     console.log('Resultados da cotação:', response.data);
                     this.resultados = response.data.ShippingSevicesArray;
+                    carregando.value = false;
                 } catch (error) {
                     if (error.response) {
                         // A requisição foi feita, mas a API retornou um código de erro
                         console.error('Erro na cotação:', error.response.data);
                         console.error('Status:', error.response.status);
                         console.error('Headers:', error.response.headers);
+                        carregando.value = false;
                     } else if (error.request) {
                         // A requisição foi feita, mas nenhuma resposta foi recebida
                         console.error('Erro na cotação: Nenhuma resposta recebida');
                         console.error(error.request);
+                        carregando.value = false;
                     } else {
                         // Algum outro erro aconteceu ao configurar a requisição
                         console.error('Erro na cotação:', error.message);
+                        carregando.value = false;
                     }
                 }
             },
@@ -355,5 +367,18 @@
         .footer-form button {
             width: 100%;
         }
+    }
+
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-top: 1.5rem;
+    }
+
+    .loading p {
+        color: var(--preto-60);
+        font-size: 1.5rem;
     }
 </style>
