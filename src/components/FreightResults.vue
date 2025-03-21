@@ -26,7 +26,7 @@
                     <td class="new-trasnp" data-label="Transportadora">Nova Transportadora</td>
                     <td data-label="Prazo">{{ time }} dias</td>
                     <td data-label="Proteção"><div class="switch" :class="{ active: isActive }" @click="toggleActive"></div></td>
-                    <td data-label="Preço">R$ R$ {{ isActive ? price : originalPrice }}</td>
+                    <td data-label="Preço">R$ {{ isActive ? price : originalPrice }}</td>
                     <td class="mobile" data-label="Contrato">Via Frenet</td>
                     <td><button>Selecionar</button></td>
                 </tr>
