@@ -25,8 +25,8 @@
                     </td>
                     <td class="new-trasnp" data-label="Transportadora">Nova Transportadora</td>
                     <td data-label="Prazo">{{ time }} dias</td>
-                    <td data-label="Proteção"><div class="switch active"></div></td>
-                    <td data-label="Preço">R$ {{ price }}</td>
+                    <td data-label="Proteção"><div class="switch" :class="{ active: isActive }" @click="toggleActive"></div></td>
+                    <td data-label="Preço">R$ R$ {{ isActive ? price : originalPrice }}</td>
                     <td class="mobile" data-label="Contrato">Via Frenet</td>
                     <td><button>Selecionar</button></td>
                 </tr>
@@ -37,6 +37,17 @@
 
 <script>
     export default {
+        data() {
+            return {
+                isActive: true,
+            };
+        },
+        methods: {
+            toggleActive() {
+                this.isActive = !this.isActive;
+            },
+        },
+
         props: {
             name: {
                 type: String, // Define o tipo de dado esperado (opcional, mas recomendado)
@@ -50,6 +61,10 @@
                 type: String,
                 required: true,
             },
+            originalPrice: {
+                type: String,
+                required: true,
+            }
         },
     }
 </script>
