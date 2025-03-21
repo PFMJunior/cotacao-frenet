@@ -26,7 +26,7 @@
                     <td class="new-trasnp" data-label="Transportadora">Nova Transportadora</td>
                     <td data-label="Prazo">{{ time }} dias</td>
                     <td data-label="Proteção"><div class="switch" :class="{ active: isActive }" @click="toggleActive"></div></td>
-                    <td data-label="Preço">R$ {{ isActive ? price : originalPrice }}</td>
+                    <td data-label="Preço">{{ isActive ? formattedPrice : originalPriceFormatted }}</td>
                     <td class="mobile" data-label="Contrato">Via Frenet</td>
                     <td><button>Selecionar</button></td>
                 </tr>
@@ -36,18 +36,10 @@
 </template>
 
 <script>
-    export default {
-        data() {
-            return {
-                isActive: true,
-            };
-        },
-        methods: {
-            toggleActive() {
-                this.isActive = !this.isActive;
-            },
-        },
+    import { ref } from 'vue';
+    import { useCurrencyFormat } from '@/hooks/useCurrencyFormat';
 
+    export default {
         props: {
             name: {
                 type: String, // Define o tipo de dado esperado (opcional, mas recomendado)
@@ -65,6 +57,22 @@
                 type: String,
                 required: true,
             }
+        },
+        setup(props) {
+            const isActive = ref(true);
+            const { formattedPrice } = useCurrencyFormat(ref(props.price));
+            const { formattedPrice: originalPriceFormatted } = useCurrencyFormat(ref(props.originalPrice));
+
+            const toggleActive = () => {
+              isActive.value = !isActive.value;
+            };
+
+            return {
+                isActive,
+                formattedPrice,
+                originalPriceFormatted,
+                toggleActive,
+            };
         },
     }
 </script>
