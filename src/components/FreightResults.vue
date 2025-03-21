@@ -18,15 +18,15 @@
                         <div class="image">
                             <img src="../assets/CARR-small.png" alt="Carrier Standard">
                             <div class="description">
-                                <p class="name">Carriers Standard via Frenet</p>
+                                <p class="name">{{ name }}</p>
                                 <p class="postagem">Poste na agência mais proxíma</p>
                             </div>
                         </div>
                     </td>
                     <td class="new-trasnp" data-label="Transportadora">Nova Transportadora</td>
-                    <td data-label="Prazo">2 dias</td>
+                    <td data-label="Prazo">{{ time }} dias</td>
                     <td data-label="Proteção"><div class="switch active"></div></td>
-                    <td data-label="Preço">R$ 15,72</td>
+                    <td data-label="Preço">R$ {{ price }}</td>
                     <td class="mobile" data-label="Contrato">Via Frenet</td>
                     <td><button>Selecionar</button></td>
                 </tr>
@@ -34,6 +34,25 @@
         </table>
     </div>
 </template>
+
+<script>
+    export default {
+        props: {
+            name: {
+                type: String, // Define o tipo de dado esperado (opcional, mas recomendado)
+                required: true, // Indica se o prop é obrigatório (opcional)
+            },
+            time: {
+                type: String,
+                required: true,
+            },
+            price: {
+                type: String,
+                required: true,
+            },
+        },
+    }
+</script>
 
 <style scoped>
     .freight-results {
