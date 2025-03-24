@@ -1,8 +1,130 @@
 <script setup>
+    import axios from 'axios';
     import PrecoInput from './PrecoInput.vue';
-    import QuoteHistory from './Quote/QuoteHistory.vue';
+    import { VueMaskDirective } from 'vue-the-mask';
     import FreightResults from './FreightResults.vue';
+    import QuoteHistory from './Quote/QuoteHistory.vue';
+    import { onMounted, ref, reactive, watch } from 'vue';
     import InformationIcon from './icons/IconInformation.vue';
+
+    const carregando = ref(false);
+    const history = ref([]);
+    const mostrarHistorico = ref(false);
+
+    const originalFormData = reactive({
+        cep_origin: '',
+        cep_destination: '',
+        weight: 0,
+        width: 0,
+        height: 0,
+        length: 0,
+        declared_value: 0,
+    });
+
+    const dados = reactive({
+        cep_origin: '',
+        cep_destination: '',
+        weight: 0,
+        width: 0,
+        height: 0,
+        length: 0,
+        declared_value: 0,
+    });
+
+    const resultados = ref([]);
+
+    const HISTORY_KEY = 'cotacoes_historico';
+
+    function saveHistory(cotacao) {
+        let historyLocalStorage = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+        historyLocalStorage.push(cotacao);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyLocalStorage));
+    }
+
+    function recoverHistory() {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    }
+
+    onMounted(() => {
+        history.value = recoverHistory();
+        Object.assign(originalFormData, JSON.parse(JSON.stringify(dados)));
+    });
+
+    function areFormValuesChanged() {
+        for (const key in dados) {
+            if (dados[key] !== originalFormData[key]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    async function cotarFrete() {
+        carregando.value = true;
+        mostrarHistorico.value = false; // Oculta o histórico ao iniciar o cálculo
+
+        console.log('Dados do formulário:', dados);
+
+        if (
+            typeof dados.weight !== 'number' ||
+            typeof dados.width !== 'number' ||
+            typeof dados.height !== 'number' ||
+            typeof dados.length !== 'number' ||
+            typeof dados.declared_value !== 'number'
+        ) {
+            console.error('Erro: Todos os campos devem ser números.');
+            carregando.value = false;
+            return;
+        }
+
+        try {
+            const response = await axios.post(
+                'http://localhost:3000/api/shipping/quote',
+                {
+                    SellerCEP: dados.cep_origin,
+                    RecipientCEP: dados.cep_destination,
+                    ShipmentInvoiceValue: dados.declared_value,
+                    ShippingItemArray: [
+                        {
+                            Weight: dados.weight,
+                            Length: dados.length,
+                            Height: dados.height,
+                            Width: dados.width,
+                        },
+                    ],
+                }
+            );
+
+            console.log('Resultados da cotação:', response.data);
+            resultados.value = response.data.ShippingSevicesArray;
+            carregando.value = false;
+            mostrarHistorico.value = true; // Exibe o histórico após o cálculo
+
+            saveHistory({
+                dados: { ...dados },
+                resultados: [...resultados.value],
+                timestamp: Date.now(),
+            });
+            history.value = recoverHistory();
+            console.log('aquiiiii', history.value);
+            Object.assign(originalFormData, JSON.parse(JSON.stringify(dados)));
+
+        } catch (error) {
+            if (error.response) {
+                console.error('Erro na cotação:', error.response.data);
+                console.error('Status:', error.response.status);
+                console.error('Headers:', error.response.headers);
+                carregando.value = false;
+            } else if (error.request) {
+                console.error('Erro na cotação: Nenhuma resposta recebida');
+                console.error(error.request);
+                carregando.value = false;
+            } else {
+                console.error('Erro na cotação:', error.message);
+                carregando.value = false;
+            }
+        }
+    }
 </script>
 
 <template>
@@ -11,6 +133,7 @@
             Calculadora de fretes
             <InformationIcon />
         </h2>
+
         <form @submit.prevent="cotarFrete">
             <div class="top">
                 <div class="form-group">
@@ -107,127 +230,20 @@
         />
     </div>
 
-    <QuoteHistory :history="history" />
+    <QuoteHistory v-if="mostrarHistorico" :history="history" />
 </template>
 
 <script>
-    import axios from 'axios';
-    import { onMounted, ref } from 'vue';
-    import { VueMaskDirective } from 'vue-the-mask';
-    
-    const carregando = ref(false);
-    const history = ref([]);
-
-    const HISTORY_KEY = 'cotacoes_historico';
-
-    function saveHistory(cotacao) {
-        let historyLocalStorage = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-        historyLocalStorage.push(cotacao);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyLocalStorage));
-    }
-
-    function recoverHistory() {
-        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    }
-
-    onMounted(() => {
-        history.value = recoverHistory();
-    });
-
     export default {
         directives: { mask: VueMaskDirective, },
         setup() {
-            const cep_origin = ref('');
-            const cep_destination = ref('');
-            const weight = ref('');
-
             return {
-                cep_origin,
-                cep_destination,
-                weight,
-                history
+                dados,
+                resultados,
+                history,
+                carregando,
+                cotarFrete,
             };
-        },
-
-        data() {
-            return {
-                dados: {
-                    cep_origin: '',
-                    cep_destination: '',
-                    weight: 0,
-                    width: 0,
-                    height: 0,
-                    length: 0,
-                    declared_value: 0,
-                },
-                resultados: [],
-            };
-        },
-        methods: {
-            async cotarFrete() {
-                carregando.value = true;
-                console.log('Dados do formulário:', this.dados);
-
-                if (
-                    typeof this.dados.weight !== 'number' ||
-                    typeof this.dados.width !== 'number' ||
-                    typeof this.dados.height !== 'number' ||
-                    typeof this.dados.length !== 'number' ||
-                    typeof this.dados.declared_value !== 'number'
-                ) {
-                    console.error('Erro: Todos os campos devem ser números.');
-                    return;
-                }
-
-                try {
-                    const response = await axios.post(
-                        'http://localhost:3000/api/shipping/quote',
-                        {
-                            SellerCEP: this.dados.cep_origin,
-                            RecipientCEP: this.dados.cep_destination,
-                            ShipmentInvoiceValue: this.dados.declared_value,
-                            ShippingItemArray: [
-                                {
-                                    Weight: this.dados.weight,
-                                    Length: this.dados.length,
-                                    Height: this.dados.height,
-                                    Width: this.dados.width,
-                                },
-                            ],
-                        }
-                    );
-
-                    console.log('Resultados da cotação:', response.data);
-                    this.resultados = response.data.ShippingSevicesArray;
-                    carregando.value = false;
-
-                    saveHistory({
-                        dados: { ...this.dados },
-                        resultados: [...this.resultados],
-                        timestamp: Date.now(),
-                    });
-                    history.value = recoverHistory();
-                    console.log("aquiiiii", history._rawValue)
-
-                } catch (error) {
-                    if (error.response) {
-                        // A requisição foi feita, mas a API retornou um código de erro
-                        console.error('Erro na cotação:', error.response.data);
-                        console.error('Status:', error.response.status);
-                        console.error('Headers:', error.response.headers);
-                        carregando.value = false;
-                    } else if (error.request) {
-                        // A requisição foi feita, mas nenhuma resposta foi recebida
-                        console.error('Erro na cotação: Nenhuma resposta recebida');
-                        console.error(error.request);
-                        carregando.value = false;
-                    } else {
-                        // Algum outro erro aconteceu ao configurar a requisição
-                        console.error('Erro na cotação:', error.message);
-                        carregando.value = false;
-                    }
-                }
-            },
         },
     };
 </script>
