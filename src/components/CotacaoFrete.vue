@@ -1,130 +1,12 @@
 <script setup>
-    import axios from 'axios';
+    import { useCotacaoStore } from '@/stores/cotacao';
     import PrecoInput from './PrecoInput.vue';
     import { VueMaskDirective } from 'vue-the-mask';
     import FreightResults from './FreightResults.vue';
     import QuoteHistory from './Quote/QuoteHistory.vue';
-    import { onMounted, ref, reactive, watch } from 'vue';
     import InformationIcon from './icons/IconInformation.vue';
 
-    const carregando = ref(false);
-    const history = ref([]);
-    const mostrarHistorico = ref(false);
-
-    const originalFormData = reactive({
-        cep_origin: '',
-        cep_destination: '',
-        weight: 0,
-        width: 0,
-        height: 0,
-        length: 0,
-        declared_value: 0,
-    });
-
-    const dados = reactive({
-        cep_origin: '',
-        cep_destination: '',
-        weight: 0,
-        width: 0,
-        height: 0,
-        length: 0,
-        declared_value: 0,
-    });
-
-    const resultados = ref([]);
-
-    const HISTORY_KEY = 'cotacoes_historico';
-
-    function saveHistory(cotacao) {
-        let historyLocalStorage = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-        historyLocalStorage.push(cotacao);
-        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyLocalStorage));
-    }
-
-    function recoverHistory() {
-        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    }
-
-    onMounted(() => {
-        history.value = recoverHistory();
-        Object.assign(originalFormData, JSON.parse(JSON.stringify(dados)));
-    });
-
-    function areFormValuesChanged() {
-        for (const key in dados) {
-            if (dados[key] !== originalFormData[key]) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    async function cotarFrete() {
-        carregando.value = true;
-        mostrarHistorico.value = false; // Oculta o histórico ao iniciar o cálculo
-
-        console.log('Dados do formulário:', dados);
-
-        if (
-            typeof dados.weight !== 'number' ||
-            typeof dados.width !== 'number' ||
-            typeof dados.height !== 'number' ||
-            typeof dados.length !== 'number' ||
-            typeof dados.declared_value !== 'number'
-        ) {
-            console.error('Erro: Todos os campos devem ser números.');
-            carregando.value = false;
-            return;
-        }
-
-        try {
-            const response = await axios.post(
-                'http://localhost:3000/api/shipping/quote',
-                {
-                    SellerCEP: dados.cep_origin,
-                    RecipientCEP: dados.cep_destination,
-                    ShipmentInvoiceValue: dados.declared_value,
-                    ShippingItemArray: [
-                        {
-                            Weight: dados.weight,
-                            Length: dados.length,
-                            Height: dados.height,
-                            Width: dados.width,
-                        },
-                    ],
-                }
-            );
-
-            console.log('Resultados da cotação:', response.data);
-            resultados.value = response.data.ShippingSevicesArray;
-            carregando.value = false;
-            mostrarHistorico.value = true; // Exibe o histórico após o cálculo
-
-            saveHistory({
-                dados: { ...dados },
-                resultados: [...resultados.value],
-                timestamp: Date.now(),
-            });
-            history.value = recoverHistory();
-            console.log('aquiiiii', history.value);
-            Object.assign(originalFormData, JSON.parse(JSON.stringify(dados)));
-
-        } catch (error) {
-            if (error.response) {
-                console.error('Erro na cotação:', error.response.data);
-                console.error('Status:', error.response.status);
-                console.error('Headers:', error.response.headers);
-                carregando.value = false;
-            } else if (error.request) {
-                console.error('Erro na cotação: Nenhuma resposta recebida');
-                console.error(error.request);
-                carregando.value = false;
-            } else {
-                console.error('Erro na cotação:', error.message);
-                carregando.value = false;
-            }
-        }
-    }
+    const cotacaoStore = useCotacaoStore();
 </script>
 
 <template>
@@ -134,7 +16,7 @@
             <InformationIcon />
         </h2>
 
-        <form @submit.prevent="cotarFrete">
+        <form @submit.prevent="cotacaoStore.cotarFrete">
             <div class="top">
                 <div class="form-group">
                     <label for="cep_origin">CEP de Origem</label>
@@ -142,7 +24,7 @@
                         type="tel"
                         id="cep_origin"
                         v-mask="'#####-###'"
-                        v-model="dados.cep_origin"
+                        v-model="cotacaoStore.dados.cep_origin"
                         placeholder="Digite o CEP"
                     />
                 </div>
@@ -153,7 +35,7 @@
                         id="cep_destination"
                         v-mask="'#####-###'"
                         placeholder="Digite o CEP"
-                        v-model="dados.cep_destination"
+                        v-model="cotacaoStore.dados.cep_destination"
                     />
                 </div>
             </div>
@@ -165,7 +47,7 @@
                             type="tel"
                             id="weight"
                             v-mask="'#.###.###'"
-                            v-model.number="dados.weight"
+                            v-model.number="cotacaoStore.dados.weight"
                         >
                         <span>kg</span>
                     </div>
@@ -177,7 +59,7 @@
                             type="tel"
                             id="width"
                             maxlength="3"
-                            v-model.number="dados.width"
+                            v-model.number="cotacaoStore.dados.width"
                         >
                         <span>cm</span>
                     </div>
@@ -189,7 +71,7 @@
                             type="tel"
                             id="height"
                             maxlength="3"
-                            v-model.number="dados.height"
+                            v-model.number="cotacaoStore.dados.height"
                         >
                         <span>cm</span>
                     </div>
@@ -201,14 +83,14 @@
                             type="tel"
                             id="length"
                             maxlength="3"
-                            v-model.number="dados.length"
+                            v-model.number="cotacaoStore.dados.length"
                         >
                         <span>cm</span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label for="declared_value">Valor Declarado</label>
-                    <PrecoInput v-model="dados.declared_value" />
+                    <PrecoInput v-model="cotacaoStore.dados.declared_value" />
                 </div>
             </div>
             <div class="footer-form">
@@ -217,34 +99,29 @@
         </form>
     </div>
 
-    <div v-if="carregando" class="loading">
+    <div v-if="cotacaoStore.carregando" class="loading">
         <p>Carregando resultados...</p>
     </div>
 
-    <div v-if="resultados.length > 0">
+    <div v-if="cotacaoStore.erro" class="error">
+        <p>Erro: {{ cotacaoStore.erro }}</p>
+    </div>
+
+    <div v-if="cotacaoStore.resultados.length > 0">
         <FreightResults
-            :name="resultados[0].ServiceDescription"
-            :time="resultados[0].OriginalDeliveryTime"
-            :price="resultados[0].ShippingPrice"
-            :originalPrice="resultados[0].OriginalShippingPrice"
+            :name="cotacaoStore.resultados[0].ServiceDescription"
+            :time="cotacaoStore.resultados[0].OriginalDeliveryTime"
+            :price="cotacaoStore.resultados[0].ShippingPrice"
+            :originalPrice="cotacaoStore.resultados[0].OriginalShippingPrice"
         />
     </div>
 
-    <QuoteHistory v-if="mostrarHistorico" :history="history" />
+    <QuoteHistory v-if="cotacaoStore.mostrarHistorico" :history="cotacaoStore.history" />
 </template>
 
 <script>
     export default {
-        directives: { mask: VueMaskDirective, },
-        setup() {
-            return {
-                dados,
-                resultados,
-                history,
-                carregando,
-                cotarFrete,
-            };
-        },
+        directives: { mask: VueMaskDirective },
     };
 </script>
 
@@ -379,6 +256,25 @@
         text-decoration: underline;
     }
 
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        margin-top: 1.5rem;
+    }
+
+    .loading p {
+        color: var(--preto-60);
+        font-size: 1.5rem;
+    }
+
+    .error {
+        color: red;
+        margin-top: 1rem;
+        text-align: center;
+    }
+
     @media (max-width: 1024px) {
         .form-container {
             padding: 0.75rem;
@@ -401,18 +297,5 @@
         .footer-form button {
             width: 100%;
         }
-    }
-
-    .loading {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        margin-top: 1.5rem;
-    }
-
-    .loading p {
-        color: var(--preto-60);
-        font-size: 1.5rem;
     }
 </style>
