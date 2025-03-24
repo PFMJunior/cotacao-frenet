@@ -87,4 +87,7 @@ export const useCotacaoStore = defineStore('cotacao', {
             return false;
         },
     },
+    limparResultados() {
+        this.resultados = [];
+    },
 });
