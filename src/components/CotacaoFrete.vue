@@ -1,7 +1,8 @@
 <script setup>
-    import InformationIcon from './icons/IconInformation.vue';
-    import FreightResults from './FreightResults.vue';
     import PrecoInput from './PrecoInput.vue';
+    import QuoteHistory from './Quote/QuoteHistory.vue';
+    import FreightResults from './FreightResults.vue';
+    import InformationIcon from './icons/IconInformation.vue';
 </script>
 
 <template>
@@ -111,14 +112,33 @@
             :originalPrice="resultados[0].OriginalShippingPrice"
         />
     </div>
+
+    <QuoteHistory :history="history" />
 </template>
 
 <script>
-    import { ref } from 'vue';
     import axios from 'axios';
+    import { onMounted, ref } from 'vue';
     import { VueMaskDirective } from 'vue-the-mask';
     
     const carregando = ref(false);
+    const history = ref([]);
+
+    const HISTORY_KEY = 'cotacoes_historico';
+
+    function saveHistory(cotacao) {
+        let historyLocalStorage = JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+        historyLocalStorage.push(cotacao);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(historyLocalStorage));
+    }
+
+    function recoverHistory() {
+        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
+    }
+
+    onMounted(() => {
+        history.value = recoverHistory();
+    });
 
     export default {
         directives: { mask: VueMaskDirective, },
@@ -130,7 +150,8 @@
             return {
                 cep_origin,
                 cep_destination,
-                weight
+                weight,
+                history
             };
         },
 
@@ -153,13 +174,7 @@
                 carregando.value = true;
                 console.log('Dados do formulário:', this.dados);
 
-                // Converter CEPs para números
-                // const cep_origin = parseInt(this.dados.cep_origin.replace(/\D/g, ''), 10);
-                // const cep_destination = parseInt(this.dados.cep_destination.replace(/\D/g, ''), 10);
-                // Verifique se todos os valores são números válidos
                 if (
-                    // isNaN(cep_origin) ||
-                    // isNaN(cep_destination) ||
                     typeof this.dados.weight !== 'number' ||
                     typeof this.dados.width !== 'number' ||
                     typeof this.dados.height !== 'number' ||
@@ -191,6 +206,15 @@
                     console.log('Resultados da cotação:', response.data);
                     this.resultados = response.data.ShippingSevicesArray;
                     carregando.value = false;
+
+                    saveHistory({
+                        dados: { ...this.dados },
+                        resultados: [...this.resultados],
+                        timestamp: Date.now(),
+                    });
+                    history.value = recoverHistory();
+                    console.log("aquiiiii", history._rawValue)
+
                 } catch (error) {
                     if (error.response) {
                         // A requisição foi feita, mas a API retornou um código de erro
