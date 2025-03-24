@@ -85,16 +85,10 @@
                 </div>
                 <div class="form-group">
                     <label for="declared_value">Valor Declarado</label>
-                    <!-- <input
-                        type="tel"
-                        id="declared_value"
-                        v-model.number="dados.declared_value"
-                    > -->
                     <PrecoInput v-model="dados.declared_value" />
                 </div>
             </div>
             <div class="footer-form">
-                <!-- <span>Dicas para embalar seus pedidos</span> -->
                 <button type="submit">Calcular frete</button>
             </div>
         </form>
