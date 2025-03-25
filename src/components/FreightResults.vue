@@ -42,8 +42,8 @@
     export default {
         props: {
             name: {
-                type: String, // Define o tipo de dado esperado (opcional, mas recomendado)
-                required: true, // Indica se o prop é obrigatório (opcional)
+                type: String,
+                required: true,
             },
             time: {
                 type: String,
@@ -205,7 +205,7 @@
         filter: brightness(.9);
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
         .calculator-results thead {
             display: none; /* Oculta o cabeçalho no celular */
         }

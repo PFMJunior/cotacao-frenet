@@ -280,8 +280,17 @@
             padding: 0.75rem;
         }
 
+        h2 {
+            padding: 1.5rem 0;
+        }
+
         .top {
             grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 0;
         }
 
         .bottom {
